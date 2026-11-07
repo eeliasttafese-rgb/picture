@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ቀለም እንቀባ</title>
+<style>
+:root{--bg:#fff8e7;--card:#ffffff;--ink:#3b2f2f;--accent:#ff7a59;--line:#e8dcc0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2a2433;--card:#3a3246;--ink:#f6efe3;--accent:#ff8f70;--line:#55496a}}
+:root[data-theme="dark"]{--bg:#2a2433;--card:#3a3246;--ink:#f6efe3;--accent:#ff8f70;--line:#55496a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Ethiopic","Abyssinica SIL",system-ui,sans-serif;text-align:center;padding:10px}
+h1{margin:4px 0;font-size:1.5rem;display:inline-block}
+#stars{margin-left:12px;font-size:1.2rem;font-weight:bold}
+.row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px auto}
+button{font:inherit;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:8px 14px;cursor:pointer}
+button.on{border-color:var(--accent);background:var(--accent);color:#fff}
+#tabs button{font-size:1.05rem}
+.sw{width:52px;height:52px;border-radius:50%;padding:0;border:3px solid var(--line)}
+.sw.on{border-color:var(--ink);transform:scale(1.15)}
+#stage{max-width:560px;margin:10px auto;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:8px;position:relative}
+svg,canvas{width:100%;height:auto;display:block}
+canvas{touch-action:none;background:#fff;border-radius:10px}
+#g{position:absolute;left:8px;top:8px;width:calc(100% - 16px);height:calc(100% - 16px);pointer-events:none}
+.r{fill:#fff;stroke:#333;stroke-width:3;stroke-linejoin:round;cursor:pointer}
+button{font-size:1.2rem}.big{display:block;width:100%;max-width:340px;font-size:1.8rem;padding:20px;margin:6px auto}.em{font-size:2rem;padding:6px 12px;line-height:1.2}
+.grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}.cell{display:flex;flex-direction:column;align-items:center;gap:4px}.th{width:120px;height:90px;padding:2px}.th img{width:100%;height:100%;object-fit:contain;background:#fff;border-radius:8px}
+#msg{min-height:1.5em;font-size:1.05rem}
+#hint{font-size:1.3rem;font-weight:bold;min-height:1.5em}
+#win{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;font-size:2rem;color:#fff;z-index:9;flex-direction:column;gap:8px;padding:20px}
+#lic{position:fixed;inset:0;background:var(--bg);color:var(--ink);z-index:20;overflow:auto;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;font-size:1.15rem}#lic input{font:inherit;padding:12px;border-radius:12px;border:2px solid var(--line);width:100%;max-width:320px;background:var(--card);color:var(--ink);text-align:center}#lic code,#lb{background:var(--card);border:2px solid var(--line);border-radius:10px;padding:4px 10px}#lb{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:15;font-size:.95rem}
+</style>
+</head>
+<body>
+<h1>🎨 ቀለም እንቀባ!</h1><span id="stars">⭐ 0</span>
+<div class="row" id="tabs"></div>
+<div class="row" id="sub"></div>
+<div class="row" id="pal"></div>
+<div id="hint"></div>
+<div id="stage"></div>
+<div class="row" id="tools"></div>
+<div id="msg">ቀለም ምረጥ፣ ከዚያ ተጫወት!</div>
+<div id="win" onclick="this.style.display='none'"><div>🎉⭐⭐⭐🎉</div><div>እንኳን ደስ አለህ! ጎበዝ!</div></div>
+<script>
+var $=function(i){return document.getElementById(i)};
+var cols=["#e53935","#fb8c00","#fdd835","#43a047","#1e88e5","#8e24aa","#f48fb1","#8d6e63"];
+var cur=cols[0],mode="h",pic="ቤት",lesson="ፀሐይ",step=0,size=10,hist=[],stars=(function(){try{return +localStorage.getItem("stars")||0}catch(e){return 0}})(),done=false,cv=null;
+var STAR='<polygon class="r" points="200,117 208.8,142.9 236.1,143.3 214.3,159.6 222.3,185.7 200,170 177.7,185.7 185.7,159.6 163.9,143.3 191.2,142.9"/>';
+var BG='<rect class="r" x="0" y="0" width="400" height="300"/>';
+var pics={
+"ቤት":{n:"🏠",s:BG+'<circle class="r" cx="330" cy="60" r="30"/><rect class="r" x="0" y="230" width="400" height="70"/><rect class="r" x="100" y="130" width="200" height="120"/><polygon class="r" points="80,135 200,50 320,135"/><rect class="r" x="180" y="180" width="45" height="70"/><rect class="r" x="120" y="160" width="40" height="40"/><rect class="r" x="245" y="160" width="40" height="40"/>'},
+"ጎጆ":{n:"🛖",s:BG+'<circle class="r" cx="60" cy="60" r="30"/><rect class="r" x="0" y="240" width="400" height="60"/><rect class="r" x="120" y="150" width="160" height="95"/><polygon class="r" points="95,155 200,55 305,155"/><rect class="r" x="185" y="185" width="30" height="60"/>'},
+"አበባ":{n:"🌸",s:BG+'<rect class="r" x="0" y="250" width="400" height="50"/><rect class="r" x="192" y="140" width="16" height="115"/><ellipse class="r" cx="150" cy="210" rx="40" ry="16"/><ellipse class="r" cx="250" cy="190" rx="40" ry="16"/><ellipse class="r" cx="200" cy="55" rx="22" ry="38"/><ellipse class="r" cx="200" cy="125" rx="22" ry="38"/><ellipse class="r" cx="165" cy="90" rx="38" ry="22"/><ellipse class="r" cx="235" cy="90" rx="38" ry="22"/><circle class="r" cx="200" cy="90" r="24"/>'},
+"ዓሣ":{n:"🐟",s:BG+'<polygon class="r" points="290,150 360,90 360,210"/><ellipse class="r" cx="200" cy="150" rx="100" ry="65"/><polygon class="r" points="190,90 230,50 250,100"/><circle class="r" cx="140" cy="135" r="14"/><circle class="r" cx="70" cy="70" r="14"/><circle class="r" cx="100" cy="40" r="9"/><rect class="r" x="0" y="260" width="400" height="40"/>'},
+"ድመት":{n:"🐱",s:BG+'<path class="r" d="M290 250 C380 240 380 150 340 130 C360 180 330 210 280 220 Z"/><ellipse class="r" cx="200" cy="220" rx="90" ry="60"/><polygon class="r" points="130,90 140,30 185,70"/><polygon class="r" points="270,90 260,30 215,70"/><circle class="r" cx="200" cy="110" r="70"/><circle class="r" cx="175" cy="100" r="12"/><circle class="r" cx="225" cy="100" r="12"/><polygon class="r" points="190,122 210,122 200,135"/>'},
+"አንበሳ":{n:"🦁",s:BG+'<circle class="r" cx="125" cy="70" r="22"/><circle class="r" cx="275" cy="70" r="22"/><circle class="r" cx="200" cy="145" r="100"/><circle class="r" cx="200" cy="150" r="65"/><circle class="r" cx="175" cy="135" r="9"/><circle class="r" cx="225" cy="135" r="9"/><polygon class="r" points="188,158 212,158 200,175"/><ellipse class="r" cx="200" cy="195" rx="25" ry="13"/>'},
+"ዝሆን":{n:"🐘",s:BG+'<rect class="r" x="0" y="255" width="400" height="45"/><rect class="r" x="120" y="200" width="35" height="60"/><rect class="r" x="230" y="200" width="35" height="60"/><ellipse class="r" cx="200" cy="170" rx="110" ry="70"/><ellipse class="r" cx="85" cy="150" rx="14" ry="22"/><circle class="r" cx="290" cy="130" r="50"/><ellipse class="r" cx="255" cy="125" rx="28" ry="40"/><path class="r" d="M330 140 C370 150 375 210 350 235 L335 225 C350 205 345 170 320 160 Z"/><circle class="r" cx="305" cy="115" r="6"/>'},
+"ባንዲራ":{n:"🇪🇹",s:BG+'<rect class="r" x="60" y="50" width="280" height="70"/><rect class="r" x="60" y="120" width="280" height="70"/><rect class="r" x="60" y="190" width="280" height="70"/><circle class="r" cx="200" cy="155" r="45"/>'+STAR+'<rect class="r" x="45" y="40" width="15" height="250"/>'}
+};
+var mpic="ሰላም";
+function K(x,y){return '<rect class="r" x="'+(x-18)+'" y="'+(y+86)+'" width="16" height="40"/><rect class="r" x="'+(x+2)+'" y="'+(y+86)+'" width="16" height="40"/><rect class="r" x="'+(x-40)+'" y="'+(y+28)+'" width="14" height="46" rx="7"/><rect class="r" x="'+(x+26)+'" y="'+(y+28)+'" width="14" height="46" rx="7"/><rect class="r" x="'+(x-26)+'" y="'+(y+24)+'" width="52" height="66" rx="12"/><circle class="r" cx="'+x+'" cy="'+y+'" r="26"/><circle cx="'+(x-9)+'" cy="'+(y-4)+'" r="3" fill="#333"/><circle cx="'+(x+9)+'" cy="'+(y-4)+'" r="3" fill="#333"/><path d="M'+(x-9)+' '+(y+8)+'Q'+x+' '+(y+17)+' '+(x+9)+' '+(y+8)+'" fill="none" stroke="#333" stroke-width="3"/>'}
+var SKY=BG+'<circle class="r" cx="350" cy="50" r="28"/><rect class="r" x="0" y="215" width="400" height="85"/>';
+function bub(t,f){return '<ellipse class="r" cx="200" cy="50" rx="62" ry="26"/><text x="200" y="'+(50+f/3)+'" text-anchor="middle" font-size="'+f+'" fill="#333">'+t+'</text>'}
+var mpics={
+"ሰላም":{n:"👋",t:"ልጆች ሲገናኙ ሰላም ይባባላሉ። ሰላምታ ልብን ደስ ያሰኛል! 👋",s:SKY+K(110,85)+K(290,85)+bub("ሰላም!",22)},
+"ማካፈል":{n:"🍞",t:"አበበ ዳቦውን ለጓደኛው አካፈለ። ሁለቱም ደስ አላቸው! 🍞",s:SKY+K(100,85)+K(300,85)+'<ellipse class="r" cx="200" cy="165" rx="42" ry="22"/><path class="r" d="M200 110C185 90 160 110 200 140C240 110 215 90 200 110Z"/>'},
+"እጅ":{n:"🧼",t:"ከመብላት በፊት እጃችንን በሳሙና እንታጠባለን። 🧼",s:SKY+K(75,85)+'<path class="r" d="M170 190L330 190L310 240L190 240Z"/><rect class="r" x="240" y="110" width="20" height="55"/><rect class="r" x="240" y="110" width="50" height="14"/><ellipse class="r" cx="280" cy="150" rx="6" ry="10"/><ellipse class="r" cx="280" cy="175" rx="6" ry="10"/>'},
+"አመሰግናለሁ":{n:"🙏",t:"ስጦታ ሲሰጡን «አመሰግናለሁ» እንላለን። 🙏",s:SKY+K(110,85)+K(290,85)+'<rect class="r" x="180" y="160" width="40" height="38"/><rect class="r" x="174" y="148" width="52" height="14"/>'+bub("አመሰግናለሁ",16)},
+"አዛውንት":{n:"👴",t:"አዛውንት ሲመጡ ወንበራችንን እንለቅላቸዋለን። 👴",s:SKY+K(80,85)+'<rect class="r" x="250" y="150" width="90" height="12"/><rect class="r" x="330" y="100" width="12" height="62"/><rect class="r" x="255" y="162" width="10" height="55"/><rect class="r" x="325" y="162" width="10" height="55"/><rect class="r" x="265" y="115" width="48" height="38" rx="10"/><circle class="r" cx="290" cy="90" r="22"/><rect class="r" x="225" y="120" width="8" height="97"/>'}
+};
+pics["ጀበና"]={n:"☕",s:BG+'<rect class="r" x="0" y="245" width="400" height="55"/><path class="r" d="M247 170L297 118L311 132L262 190Z"/><path class="r" d="M152 150C100 150 100 215 140 225L146 205C120 200 125 165 160 170Z"/><path class="r" d="M150 232Q125 170 170 140L230 140Q275 170 250 232Z"/><rect class="r" x="180" y="90" width="40" height="55"/><ellipse class="r" cx="200" cy="85" rx="26" ry="12"/><path class="r" d="M320 235h36l-5 26h-26z"/>'};
+pics["ቤተ ክርስቲያን"]={n:"⛪",s:BG+'<rect class="r" x="0" y="230" width="400" height="70"/><rect class="r" x="110" y="118" width="180" height="112"/><rect class="r" x="100" y="100" width="200" height="18"/><path class="r" d="M180 230V192Q200 165 220 192V230Z"/><path class="r" d="M130 200V172Q145 152 160 172V200Z"/><path class="r" d="M240 200V172Q255 152 270 172V200Z"/><rect class="r" x="194" y="55" width="12" height="45"/><rect class="r" x="180" y="68" width="40" height="12"/>'};
+pics["ሞሰብ"]={n:"🧺",s:BG+'<rect class="r" x="0" y="255" width="400" height="45"/><path class="r" d="M130 210L270 210L255 262L145 262Z"/><path class="r" d="M120 160L280 160L270 210L130 210Z"/><path class="r" d="M110 160Q200 70 290 160Z"/><circle class="r" cx="200" cy="92" r="12"/>'};
+var L={
+"ፀሐይ":[["ትልቅ ክብ ሳል",'<circle cx="200" cy="150" r="60"/>'],["በክቡ ዙሪያ ጨረሮችን ሳል",'<path d="M200 60V30M200 240V270M110 150H80M290 150H320M136 86L115 65M264 86L285 65M136 214L115 235M264 214L285 235"/>'],["ዓይኖችንና ፈገግታን ጨምር",'<circle cx="175" cy="135" r="7"/><circle cx="225" cy="135" r="7"/><path d="M165 170Q200 205 235 170"/>']],
+"ቤት":[["አራት ማዕዘን ሳል (ግድግዳ)",'<rect x="110" y="140" width="180" height="120"/>'],["ሦስት ማዕዘን ሳል (ጣራ)",'<path d="M95 145L200 60L305 145Z"/>'],["በርና መስኮት ሳል",'<rect x="180" y="195" width="40" height="65"/><rect x="125" y="165" width="35" height="35"/>']],
+"ዓሣ":[["ሞላላ ቅርጽ ሳል (አካል)",'<ellipse cx="190" cy="150" rx="100" ry="60"/>'],["ሦስት ማዕዘን ጅራት ሳል",'<path d="M285 150L350 100L350 200Z"/>'],["ዓይንና ክንፍ ሳል",'<circle cx="135" cy="135" r="9"/><path d="M180 95L215 60L235 100"/>']],
+"ዛፍ":[["ረጅም አራት ማዕዘን ሳል (ግንድ)",'<rect x="180" y="170" width="40" height="100"/>'],["ትልቅ ክብ ሳል (ቅጠል)",'<circle cx="200" cy="120" r="70"/>'],["ፍሬዎችን ጨምር",'<circle cx="170" cy="110" r="10"/><circle cx="225" cy="95" r="10"/><circle cx="205" cy="145" r="10"/>']],
+"መኪና":[["ረጅም አራት ማዕዘን ሳል (አካል)",'<rect x="80" y="150" width="240" height="60"/>'],["ጣራ ሳል",'<path d="M120 150L150 105H250L280 150"/>'],["መስኮቶችን ሳል",'<rect x="158" y="115" width="40" height="30"/><rect x="205" y="115" width="40" height="30"/>'],["ሁለት ጎማዎችን ሳል",'<circle cx="140" cy="215" r="28"/><circle cx="260" cy="215" r="28"/>']],
+"አበባ":[["ትንሽ ክብ ሳል (መሃል)",'<circle cx="200" cy="110" r="22"/>'],["በክቡ ዙሪያ ቅጠሎችን ሳል",'<circle cx="200" cy="65" r="22"/><circle cx="240" cy="88" r="22"/><circle cx="240" cy="132" r="22"/><circle cx="200" cy="155" r="22"/><circle cx="160" cy="132" r="22"/><circle cx="160" cy="88" r="22"/>'],["ግንድና ቅጠል ሳል",'<path d="M200 180V270"/><ellipse cx="240" cy="225" rx="30" ry="14"/>']],
+"ድመት":[["ትልቅ ክብ ሳል (ራስ)",'<circle cx="200" cy="150" r="70"/>'],["ሁለት ሦስት ማዕዘኖች ሳል (ጆሮ)",'<path d="M140 105L150 50L185 85Z"/><path d="M260 105L250 50L215 85Z"/>'],["ዓይኖችና አፍንጫ ሳል",'<circle cx="175" cy="140" r="8"/><circle cx="225" cy="140" r="8"/><path d="M190 160H210L200 172Z"/>'],["ጢምና አፍ ሳል",'<path d="M150 165H110M150 180H110M250 165H290M250 180H290M185 185Q200 198 215 185"/>']],
+"ጀልባ":[["የጀልባውን አካል ሳል",'<path d="M80 190H320L280 245H120Z"/>'],["ረጅም መስመር ሳል (ምሰሶ)",'<path d="M200 190V60"/>'],["ሦስት ማዕዘን ሸራ ሳል",'<path d="M205 65V180H290Z"/>'],["ማዕበል ሳል",'<path d="M30 270Q60 250 90 270T150 270T210 270T270 270T330 270T390 270"/>']],
+"ወፍ":[["ሞላላ ቅርጽ ሳል (አካል)",'<ellipse cx="190" cy="160" rx="70" ry="50"/>'],["ትንሽ ክብ ሳል (ራስ)",'<circle cx="250" cy="115" r="32"/>'],["ምንቃርና ዓይን ሳል",'<path d="M278 112L315 122L280 130Z"/><circle cx="258" cy="108" r="5"/>'],["ክንፍና ጅራት ሳል",'<path d="M150 160Q190 110 215 165"/><path d="M122 160L70 135L75 185Z"/>'],["እግሮችን ሳል",'<path d="M180 208V250M205 208V250"/>']],
+"ቤት ፪":[["ሁለት አራት ማዕዘኖች ሳል (የቤቱ ሁለት ክፍሎች)",'<rect x="70" y="160" width="120" height="100"/><rect x="190" y="130" width="140" height="130"/>'],["ሁለት ጣራዎችን ሳል",'<path d="M55 165L130 105L205 165Z"/><path d="M180 135L260 70L340 135Z"/>'],["በሮችንና መስኮቶችን ሳል",'<rect x="105" y="205" width="30" height="55"/><rect x="225" y="170" width="35" height="35"/><rect x="285" y="170" width="30" height="35"/>']]
+};
+function msg(t){$("msg").textContent=t}
+function btn(p,t,f,on){var b=document.createElement("button");b.textContent=t;if(on)b.className="on";b.onclick=f;p.appendChild(b);return b}
+function drawPal(){var p=$("pal");p.innerHTML="";cols.forEach(function(c){var b=document.createElement("button");b.className="sw"+(c===cur?" on":"");b.style.background=c;b.setAttribute("aria-label",c);b.onclick=function(){cur=c;drawPal()};p.appendChild(b)})}
+function win(t){stars++;$("stars").textContent="⭐ "+stars;try{localStorage.setItem("stars",stars)}catch(e){}var w=$("win"),s=typeof t==="string";w.lastChild.textContent=s?t:"እንኳን ደስ አለህ! ጎበዝ!";w.lastChild.style.fontSize=s?"1.5rem":"2rem";w.style.display="flex";setTimeout(function(){w.style.display="none"},s?7000:2500)}
+async function dl(blob,name){var d=null;try{d=window.claude&&await claude.use("downloads")}catch(e){}
+if(!d){var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();msg("ተቀምጧል! 🎉");return}
+try{await d.save({filename:name,data:blob});msg("ተቀምጧል! 🎉")}catch(e){if(!e||e.code!=="declined")msg("ማስቀመጥ አልተቻለም")}}
+function saveC(){var s=$("stage").querySelector("svg").cloneNode(true);
+s.setAttribute("xmlns","http://www.w3.org/2000/svg");
+s.querySelectorAll(".r").forEach(function(e){e.setAttribute("fill",e.style.fill||"#fff");e.setAttribute("stroke","#333");e.setAttribute("stroke-width","3");e.setAttribute("stroke-linejoin","round");e.removeAttribute("style");e.removeAttribute("class")});
+var x=new XMLSerializer().serializeToString(s),im=new Image();
+im.onload=function(){var c=document.createElement("canvas");c.width=800;c.height=600;var q=c.getContext("2d");q.fillStyle="#fff";q.fillRect(0,0,800,600);q.drawImage(im,0,0,800,600);c.toBlob(function(b){dl(b,"my-picture.png")})};
+im.onerror=function(){dl(new Blob([x],{type:"image/svg+xml"}),"my-picture.svg")};
+im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(x)}
+function mkCanvas(){var c=document.createElement("canvas");c.width=800;c.height=600;var q=c.getContext("2d");q.fillStyle="#fff";q.fillRect(0,0,800,600);q.lineCap="round";q.lineJoin="round";
+var on=false,lx=0,ly=0;
+function pt(e){var r=c.getBoundingClientRect();return[(e.clientX-r.left)*800/r.width,(e.clientY-r.top)*600/r.height]}
+c.onpointerdown=function(e){on=true;c.setPointerCapture(e.pointerId);var p=pt(e);lx=p[0];ly=p[1];q.fillStyle=cur;q.beginPath();q.arc(lx,ly,size/2,0,7);q.fill()};
+c.onpointermove=function(e){if(!on)return;var p=pt(e);q.strokeStyle=cur;q.lineWidth=size;q.beginPath();q.moveTo(lx,ly);q.lineTo(p[0],p[1]);q.stroke();lx=p[0];ly=p[1]};
+c.onpointerup=c.onpointercancel=function(){on=false};
+return c}
+function guide(){var g=$("g"),a=L[lesson],h="";
+for(var i=0;i<=step;i++){h+=i<step?'<g fill="none" stroke="#999" stroke-width="3" stroke-dasharray="8 8">'+a[i][1]+'</g>':'<g fill="none" stroke="#ff7a59" stroke-width="5" stroke-dasharray="10 8">'+a[i][1]+'</g>'}
+g.innerHTML=h;$("hint").textContent="ደረጃ "+(step+1)+"/"+a.length+"፦ "+a[step][0]}
+var PICS=[],DB=null,AS=null,adm=false,curPic=null;
+var fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.multiple=true;
+fi.onchange=async function(){var fs=[].slice.call(fi.files);fi.value="";if(!AS||!DB)return;msg("እየጨመረ ነው…");
+try{for(var f of fs){var r=await AS.upload(f);var ref=await DB.collection("pictures").add({aid:r.id,url:r.url,ts:Date.now()});if(!PICS.some(function(z){return z.id===ref.id}))PICS.push({id:ref.id,aid:r.id,url:r.url})}if(mode==="p")ui();msg("ተጨምሯል ✅ ስዕሉ ከታች ይታያል")}catch(e){msg("መጨመር አልተቻለም ("+((e&&(e.code||e.message))||"?")+")")}};
+async function delPic(q){try{await DB.collection("pictures").doc(q.id).delete();await AS.delete(q.aid)}catch(e){msg("አልተሰረዘም")}}
+function gate(cb){var o=document.createElement("div"),a=2+Math.floor(Math.random()*7),b=2+Math.floor(Math.random()*7);
+o.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff;font-size:2rem;z-index:9";
+o.textContent="🔒 "+a+" + "+b+" = ?";var i=document.createElement("input");i.type="number";i.style.cssText="font-size:2rem;width:120px;text-align:center";
+var k=document.createElement("button"),x=document.createElement("button");k.textContent="✔";x.textContent="✖";k.className=x.className="em";
+k.onclick=function(){if(+i.value===a+b){o.remove();cb()}else i.value=""};x.onclick=function(){o.remove()};o.append(i,k,x);document.body.appendChild(o)}
+function ff(x,y,hex){var q=cv.getContext("2d"),W=800,H=600,id=q.getImageData(0,0,W,H),d=id.data,i=(y*W+x)*4,r0=d[i],g0=d[i+1],b0=d[i+2];
+if(r0+g0+b0<300)return;var c=[1,3,5].map(function(n){return parseInt(hex.substr(n,2),16)});
+if(Math.abs(r0-c[0])+Math.abs(g0-c[1])+Math.abs(b0-c[2])<10)return;
+hist.push(q.getImageData(0,0,W,H));if(hist.length>8)hist.shift();
+var st=[x,y],seen=new Uint8Array(W*H);
+while(st.length){var yy=st.pop(),xx=st.pop();if(xx<0||yy<0||xx>=W||yy>=H)continue;var p=yy*W+xx;if(seen[p])continue;var j=p*4;
+if(Math.abs(d[j]-r0)+Math.abs(d[j+1]-g0)+Math.abs(d[j+2]-b0)>150)continue;seen[p]=1;d[j]=c[0];d[j+1]=c[1];d[j+2]=c[2];d[j+3]=255;st.push(xx+1,yy,xx-1,yy,xx,yy+1,xx,yy-1)}
+q.putImageData(id,0,0)}
+function coll(){var T=$("tabs"),st=$("stage"),O=$("tools");
+if(mode==="p"){em(T,adm?"➕":"🔒",function(){if(!AS||!DB){msg("እዚህ መጨመር አይቻልም። ገጹን በ claude.ai ላይ በራስዎ አካውንት ከአርቲፋክት ገጹ ይክፈቱ። ("+(AS?"":"assets ")+(DB?"":"db")+")");return}if(adm)fi.click();else gate(function(){adm=true;ui()})});
+var g=document.createElement("div");g.className="grid";
+PICS.forEach(function(q){var w=document.createElement("div");w.className="cell";var b=document.createElement("button");b.className="th";var im=new Image();im.alt="";im.src=q.url||"/_blob/"+q.aid;im.onerror=function(){msg("ምስሉ አልታየም")};b.appendChild(im);
+b.onclick=function(){curPic=q;mode="q";hist=[];ui()};w.appendChild(b);
+if(adm){var d=document.createElement("button");d.textContent="🗑️";d.className="em";d.onclick=function(){delPic(q)};w.appendChild(d)}g.appendChild(w)});
+st.appendChild(g);msg(!DB?"ስብስቡ አልተገኘም":PICS.length?"የምትፈልገውን ስዕል ምረጥ!":AS?"ገና ስዕል የለም፤ 🔒 ን ተጭነው ስዕል ይጨምሩ":"ገና ስዕል የለም")}
+else{em(T,"🖼️",function(){mode="p";ui()});cv=document.createElement("canvas");cv.width=800;cv.height=600;var q=cv.getContext("2d");q.fillStyle="#fff";q.fillRect(0,0,800,600);st.appendChild(cv);
+var im=new Image();im.onload=function(){var s=Math.min(800/im.width,600/im.height);q.drawImage(im,(800-im.width*s)/2,(600-im.height*s)/2,im.width*s,im.height*s)};im.src=curPic.url||"/_blob/"+curPic.aid;
+cv.onclick=function(e){var r=cv.getBoundingClientRect();try{ff(Math.floor((e.clientX-r.left)*800/r.width),Math.floor((e.clientY-r.top)*600/r.height),cur)}catch(x){msg("ይህ ስዕል መቀባት አልተቻለም")}};
+em(O,"↩️",function(){var z=hist.pop();if(z)cv.getContext("2d").putImageData(z,0,0)});em(O,"💾",function(){cv.toBlob(function(b){dl(b,"my-picture.png")})});msg("ቀለም ምረጥና ንካ!")}}
+async function init(){try{if(!window.claude)return;DB=await claude.use("db");AS=await claude.use("assets");
+if(DB)DB.collection("pictures").orderBy("ts").onSnapshot(function(s){PICS=s.docs.map(function(d){return{id:d.id,aid:(d.data()||{}).aid,url:(d.data()||{}).url}}).filter(function(q){return q.aid});if(mode==="p")ui()},function(e){msg("ስብስቡን ማንበብ አልተቻለም ("+((e&&e.code)||"?")+")")});
+if(mode==="p")ui()}catch(e){}}
+var LI={"ፀሐይ":"☀️","ቤት":"🏠","ዓሣ":"🐟","ዛፍ":"🌳","መኪና":"🚗","አበባ":"🌼","ድመት":"🐱","ጀልባ":"⛵","ወፍ":"🐦","ቤት ፪":"🏘️"};
+function em(p,t,f,on){var b=btn(p,t,f,on);b.classList.add("em");return b}
+function ui(){var T=$("tabs"),S=$("sub"),O=$("tools"),st=$("stage");T.innerHTML=S.innerHTML=O.innerHTML=st.innerHTML="";$("hint").textContent="";msg("");
+$("pal").style.display=mode==="h"?"none":"flex";
+if(mode==="h"){[["c","🎨 ቀለም ቀባ"],["d","✏️ ሳል"],["l","👀 ተመልከትና ሳል"],["p","🖼️ የስዕል ስብስብ"],["m","🌟 መልካም ጠባይ"]].filter(function(m){return m[0]!=="p"||window.claude}).forEach(function(m){var b=btn(T,m[1],function(){mode=m[0];hist=[];done=false;step=0;ui()});b.className="big"});msg("ምን እንጫወት?");return}
+em(T,"🏠",function(){mode="h";adm=false;ui()});
+if(mode==="p"||mode==="q"){coll();return}
+if(mode==="c"||mode==="m"){var P=mode==="m"?mpics:pics,key=mode==="m"?mpic:pic;Object.keys(P).forEach(function(k){em(S,P[k].n,function(){if(mode==="m")mpic=k;else pic=k;hist=[];done=false;ui()},k===key)});
+st.innerHTML='<svg viewBox="0 0 400 300">'+P[key].s+'</svg>';
+st.querySelectorAll(".r").forEach(function(el){el.addEventListener("click",function(){hist.push([el,el.style.fill]);el.style.fill=cur;msg("ጎበዝ! 👏");
+var all=true;st.querySelectorAll(".r").forEach(function(x){if(!x.style.fill)all=false});if(all&&!done){done=true;win(P[key].t)}})});
+em(O,"↩️",function(){var h=hist.pop();if(h){h[0].style.fill=h[1];done=false}});em(O,"💾",saveC)}
+else{cv=mkCanvas();st.appendChild(cv);
+if(mode==="d"){[["•",4],["●",10],["⬤",22]].forEach(function(z){var b=em(S,z[0],function(){size=z[1];S.querySelectorAll("button").forEach(function(x){x.classList.remove("on")});b.classList.add("on")},size===z[1])});
+em(S,"🩹",function(){cur="#ffffff";drawPal()});
+em(O,"🧽",ui);em(O,"💾",function(){cv.toBlob(function(b){dl(b,"my-drawing.png")})});em(O,"✅",win)}
+else{size=8;Object.keys(L).forEach(function(k){em(S,LI[k]||k,function(){lesson=k;step=0;ui()},k===lesson)});
+var s=document.createElementNS("http://www.w3.org/2000/svg","svg");s.id="g";s.setAttribute("viewBox","0 0 400 300");st.appendChild(s);guide();
+em(O,"⬅️",function(){if(step>0){step--;guide()}});
+em(O,"➡️",function(){if(step<L[lesson].length-1){step++;guide()}else{msg("ጨርሰሃል! ✅ ን ጫን")}});
+em(O,"💾",function(){cv.toBlob(function(b){dl(b,"my-lesson.png")})});em(O,"✅",win)}}}
+$("stars").textContent="⭐ "+stars;drawPal();ui();init();
+</script>
+<script>
+(function(){
+var SB="https://aolixgangsjfimxzkedv.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvbGl4Z2FuZ3NqZmlteHprZWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQwMDYwNDYsImV4cCI6MjEwOTU4MjA0Nn0.7ZUmaOSL32vgMck3-8FKig4bEjyu3-OOEVZfn84c0gE";
+var L=document.createElement("div");L.id="lic";document.body.appendChild(L);
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+var code=ls("dev");
+if(!code){var u=(window.crypto&&crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+String(Date.now())).replace(/-/g,"").toUpperCase().slice(0,12);code=u.slice(0,4)+"-"+u.slice(4,8)+"-"+u.slice(8,12);ls("dev",code)}
+async function rpc(fn,a){var r=await fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(a)});var j=null;try{j=await r.json()}catch(e){}if(!r.ok)throw j||{message:"error"};return j}
+function show(html){L.style.display="flex";L.innerHTML=html}
+function g(i){return document.getElementById(i)}
+function hide(){L.style.display="none"}
+function info(ic,t,retry){show('<div style="font-size:3rem">'+ic+'</div><div>'+t+'</div><div>የመሣሪያ ኮድ፦ <code>'+code+'</code></div>'+(retry?'<button id="lr" class="big">🔄 ድጋሚ ፈትሽ</button>':''));if(retry)g("lr").onclick=run}
+function reg(){show('<div style="font-size:3rem">🔒</div><div>ይህን መሣሪያ ለመመዝገብ የወላጅ ኢሜል ያስገቡ</div><input id="le" type="email" placeholder="email@example.com"><button id="lg" class="big">ጥያቄ ላክ</button><div id="lm"></div><div>የመሣሪያ ኮድ፦ <code>'+code+'</code></div>');
+g("lg").onclick=async function(){var e=g("le").value.trim();g("lm").textContent="…";try{await rpc("register_device",{p_code:code,p_email:e});run()}catch(x){g("lm").textContent="ኢሜሉ ትክክል አይደለም ወይም መላክ አልተቻለም"}}}
+function renew(){show('<div style="font-size:3rem">⏰</div><div>ፈቃዱ አብቅቷል። ከአስተዳዳሪው የተቀበሉትን የማረጋገጫ ቁልፍ ያስገቡ</div><input id="lk" placeholder="ቁልፍ"><button id="lg" class="big">አድስ</button><div id="lm"></div><div>የመሣሪያ ኮድ፦ <code>'+code+'</code></div>');
+g("lg").onclick=async function(){g("lm").textContent="…";try{await rpc("redeem_key",{p_code:code,p_key:g("lk").value});run()}catch(x){g("lm").textContent="ቁልፉ ትክክል አይደለም ወይም ተጠቅሞበታል"}}}
+function ok(exp){hide();var n=Math.ceil((new Date(exp)-Date.now())/864e5);if(n<=14){var b=document.createElement("div");b.id="lb";b.textContent="⏳ ፈቃዱ በ "+n+" ቀን ያበቃል";document.body.appendChild(b);setTimeout(function(){b.remove()},7000)}}
+async function run(){show('<div style="font-size:3rem">🔒</div><div>እየፈተሸ ነው…</div>');
+try{var rows=await rpc("check_device",{p_code:code}),d=rows&&rows[0];
+if(!d)return reg();
+if(d.status==="revoked")return info("🚫","ይህ መሣሪያ ታግዷል። አስተዳዳሪውን ያነጋግሩ።");
+if(d.status==="pending")return info("⏳","ጥያቄዎ ተልኳል። አስተዳዳሪው ሲያጸድቅ ይሠራል።",true);
+if(d.active){ls("exp",d.expires_at);return ok(d.expires_at)}
+return renew()}
+catch(e){var x=ls("exp");if(x&&new Date(x)>new Date()){hide();return}info("📡","ከበይነመረብ ጋር መገናኘት አልተቻለም።",true)}}
+run();
+})();
+</script>
+</body>
+</html>

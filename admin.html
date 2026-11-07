@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="am"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>የአስተዳዳሪ ገጽ</title>
+<style>
+:root{--bg:#f6f3ee;--card:#fff;--ink:#2b2b2b;--line:#ddd;--ac:#ff7a59}
+@media (prefers-color-scheme:dark){:root{--bg:#242029;--card:#332e3a;--ink:#f1ece4;--line:#4d4558;--ac:#ff8f70}}
+*{box-sizing:border-box}body{margin:0;padding:12px;background:var(--bg);color:var(--ink);font-family:"Noto Sans Ethiopic",system-ui,sans-serif}
+.w{max-width:640px;margin:auto}h1{font-size:1.3rem}
+input,button{font:inherit;padding:10px 12px;border-radius:10px;border:2px solid var(--line);background:var(--card);color:var(--ink)}
+button{cursor:pointer}button.p{background:var(--ac);border-color:var(--ac);color:#fff}
+.c{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
+.r{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.b{padding:2px 8px;border-radius:8px;font-size:.85rem;background:var(--line)}
+.k{font-size:1.6rem;letter-spacing:2px;font-weight:bold;text-align:center;padding:10px;border:2px dashed var(--ac);border-radius:10px;user-select:all}
+small{opacity:.75}#m{min-height:1.4em;color:var(--ac)}
+</style></head><body><div class="w">
+<h1>🔑 የአስተዳዳሪ ገጽ</h1><div id="m"></div><div id="v"></div></div>
+<script>
+var SB="https://aolixgangsjfimxzkedv.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvbGl4Z2FuZ3NqZmlteHprZWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQwMDYwNDYsImV4cCI6MjEwOTU4MjA0Nn0.7ZUmaOSL32vgMck3-8FKig4bEjyu3-OOEVZfn84c0gE",tok=null;
+var $=function(i){return document.getElementById(i)};
+function msg(t){$("m").textContent=t||""}
+async function api(p,o){o=o||{};o.headers=Object.assign({apikey:KEY,Authorization:"Bearer "+(tok||KEY),"Content-Type":"application/json"},o.headers||{});var r=await fetch(SB+p,o),t=await r.text(),j=null;try{j=t?JSON.parse(t):null}catch(e){}if(!r.ok)throw j||{message:r.status};return j}
+function login(){$("v").innerHTML='<div class="c"><input id="e" type="email" placeholder="ኢሜል" style="width:100%"><br><br><input id="p" type="password" placeholder="የይለፍ ቃል" style="width:100%"><div class="r"><button class="p" id="go">ግባ</button></div></div>';
+$("go").onclick=async function(){msg("…");try{var j=await api("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email:$("e").value.trim(),password:$("p").value})});tok=j.access_token;msg("");load()}catch(e){msg("መግባት አልተቻለም፦ ኢሜል ወይም የይለፍ ቃል ትክክል አይደለም")}}}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+var ST={pending:"⏳ በመጠባበቅ ላይ",approved:"✅ ጸድቋል",revoked:"🚫 ታግዷል"};
+async function load(){try{var d=await api("/rest/v1/devices?select=*&order=registered_at.desc");render(d)}catch(e){tok=null;msg("እንደገና ይግቡ");login()}}
+function render(a){var v=$("v");v.innerHTML='<div class="r"><button id="rf">🔄 አድስ</button><small>'+a.length+' መሣሪያዎች</small></div>';
+$("rf").onclick=load;
+a.forEach(function(d){var n=d.expires_at?Math.ceil((new Date(d.expires_at)-Date.now())/864e5):null;
+var c=document.createElement("div");c.className="c";
+c.innerHTML='<div><b>'+esc(d.parent_email)+'</b></div><div><code>'+esc(d.device_code)+'</code> <span class="b">'+ST[d.status]+'</span></div><small>ተመዝግቧል፦ '+new Date(d.registered_at).toLocaleDateString()+(d.expires_at?' · ያበቃል፦ '+new Date(d.expires_at).toLocaleDateString()+' ('+(n>0?n+' ቀን ቀሪ':'አብቅቷል')+')':'')+'</small><div class="r"><input type="number" value="90" min="1" style="width:80px"> ቀን<button class="p" data-a="ap">✅ አጽድቅ</button><button data-a="ky">🔑 ቁልፍ</button><button data-a="rv">🚫 ከልክል</button></div><div class="kb"></div>';
+var days=c.querySelector("input");
+c.querySelector('[data-a=ap]').onclick=async function(){try{await api("/rest/v1/rpc/admin_approve",{method:"POST",body:JSON.stringify({p_device:d.id,p_days:+days.value||90})});load()}catch(e){msg("አልተሳካም")}};
+c.querySelector('[data-a=ky]').onclick=async function(){try{var k=await api("/rest/v1/rpc/admin_make_key",{method:"POST",body:JSON.stringify({p_device:d.id,p_days:+days.value||90})});c.querySelector(".kb").innerHTML='<div class="k">'+esc(k)+'</div><small>ይህን ቁልፍ አሁን ይቅዱ፤ ከዚህ በኋላ አይታይም። አንድ ጊዜ ብቻ ይሠራል።</small>'}catch(e){msg("ቁልፍ መፍጠር አልተቻለም")}};
+c.querySelector('[data-a=rv]').onclick=async function(){if(!confirm("ይህን መሣሪያ ይከለከል?"))return;try{await api("/rest/v1/devices?id=eq."+d.id,{method:"PATCH",body:JSON.stringify({status:"revoked"})});load()}catch(e){msg("አልተሳካም")}};
+v.appendChild(c)})}
+login();
+</script></body></html>
