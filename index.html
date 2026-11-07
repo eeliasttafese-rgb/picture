@@ -17,7 +17,7 @@ h1{margin:4px 0;font-size:1.5rem;display:inline-block}
 button{font:inherit;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:8px 14px;cursor:pointer}
 button.on{border-color:var(--accent);background:var(--accent);color:#fff}
 #tabs button{font-size:1.05rem}
-.sw{width:52px;height:52px;border-radius:50%;padding:0;border:3px solid var(--line)}
+.sw{width:44px;height:44px;border-radius:50%;padding:0;border:3px solid var(--line)}
 .sw.on{border-color:var(--ink);transform:scale(1.15)}
 #stage{max-width:560px;margin:10px auto;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:8px;position:relative}
 svg,canvas{width:100%;height:auto;display:block}
@@ -30,6 +30,7 @@ button{font-size:1.2rem}.big{display:block;width:100%;max-width:340px;font-size:
 #hint{font-size:1.3rem;font-weight:bold;min-height:1.5em}
 #win{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;font-size:2rem;color:#fff;z-index:9;flex-direction:column;gap:8px;padding:20px}
 #lic{position:fixed;inset:0;background:var(--bg);color:var(--ink);z-index:20;overflow:auto;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;font-size:1.15rem}#lic input{font:inherit;padding:12px;border-radius:12px;border:2px solid var(--line);width:100%;max-width:320px;background:var(--card);color:var(--ink);text-align:center}#lic code,#lb{background:var(--card);border:2px solid var(--line);border-radius:10px;padding:4px 10px}#lb{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:15;font-size:.95rem}
+#mu{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:8px;z-index:10;font-size:1.3rem;padding:6px 10px;border-radius:50%}
 </style>
 </head>
 <body>
@@ -44,7 +45,7 @@ button{font-size:1.2rem}.big{display:block;width:100%;max-width:340px;font-size:
 <div id="win" onclick="this.style.display='none'"><div>🎉⭐⭐⭐🎉</div><div>እንኳን ደስ አለህ! ጎበዝ!</div></div>
 <script>
 var $=function(i){return document.getElementById(i)};
-var cols=["#e53935","#fb8c00","#fdd835","#43a047","#1e88e5","#8e24aa","#f48fb1","#8d6e63"];
+var cols=["#e53935","#fb8c00","#fdd835","#43a047","#1e88e5","#8e24aa","#f48fb1","#8d6e63","#212121","#9e9e9e","#ffffff","#81d4fa","#a5d6a7","#f8d5b8","#c68642","#6b4226"];
 var cur=cols[0],mode="h",pic="ቤት",lesson="ፀሐይ",step=0,size=10,hist=[],stars=(function(){try{return +localStorage.getItem("stars")||0}catch(e){return 0}})(),done=false,cv=null;
 var STAR='<polygon class="r" points="200,117 208.8,142.9 236.1,143.3 214.3,159.6 222.3,185.7 200,170 177.7,185.7 185.7,159.6 163.9,143.3 191.2,142.9"/>';
 var BG='<rect class="r" x="0" y="0" width="400" height="300"/>';
@@ -127,7 +128,7 @@ while(st.length){var yy=st.pop(),xx=st.pop();if(xx<0||yy<0||xx>=W||yy>=H)continu
 if(Math.abs(d[j]-r0)+Math.abs(d[j+1]-g0)+Math.abs(d[j+2]-b0)>150)continue;seen[p]=1;d[j]=c[0];d[j+1]=c[1];d[j+2]=c[2];d[j+3]=255;st.push(xx+1,yy,xx-1,yy,xx,yy+1,xx,yy-1)}
 q.putImageData(id,0,0)}
 function coll(){var T=$("tabs"),st=$("stage"),O=$("tools");
-if(mode==="p"){em(T,adm?"➕":"🔒",function(){if(!AS||!DB){msg("እዚህ መጨመር አይቻልም። ("+(AS?"":"assets ")+(DB?"":"db")+")");return}if(adm)fi.click();else gate(function(){adm=true;ui()})});
+if(mode==="p"){em(T,adm?"➕":"🔒",function(){if(!AS||!DB){msg("እዚህ መጨመር አይቻልም። ገጹን በ claude.ai ላይ በራስዎ አካውንት ከአርቲፋክት ገጹ ይክፈቱ። ("+(AS?"":"assets ")+(DB?"":"db")+")");return}if(adm)fi.click();else gate(function(){adm=true;ui()})});
 var g=document.createElement("div");g.className="grid";
 PICS.forEach(function(q){var w=document.createElement("div");w.className="cell";var b=document.createElement("button");b.className="th";var im=new Image();im.alt="";im.src=q.url||"/_blob/"+q.aid;im.onerror=function(){msg("ምስሉ አልታየም")};b.appendChild(im);
 b.onclick=function(){curPic=q;mode="q";hist=[];ui()};w.appendChild(b);
@@ -145,7 +146,7 @@ var LI={"ፀሐይ":"☀️","ቤት":"🏠","ዓሣ":"🐟","ዛፍ":"🌳","�
 function em(p,t,f,on){var b=btn(p,t,f,on);b.classList.add("em");return b}
 function ui(){var T=$("tabs"),S=$("sub"),O=$("tools"),st=$("stage");T.innerHTML=S.innerHTML=O.innerHTML=st.innerHTML="";$("hint").textContent="";msg("");
 $("pal").style.display=mode==="h"?"none":"flex";
-if(mode==="h"){[["c","🎨 ቀለም ቀባ"],["d","✏️ ሳል"],["l","👀 ተመልከትና ሳል"],["p","🖼️ የስዕል ስብስብ"],["m","🌟 መልካም ጠባይ"]].forEach(function(m){var b=btn(T,m[1],function(){mode=m[0];hist=[];done=false;step=0;ui()});b.className="big"});msg("ምን እንጫወት?");return}
+if(mode==="h"){[["c","🎨 ቀለም ቀባ"],["d","✏️ ሳል"],["l","👀 ተመልከትና ሳል"],["p","🖼️ የስዕል ስብስብ"],["m","🌟 መልካም ጠባይ"]].forEach(function(m){var b=btn(T,m[1],function(){mode=m[0];hist=[];done=false;step=0;ui()});b.className="big"});if(window.LIC&&LIC.showRef){var b2=btn(T,"🎁 ወላጅ ጋብዝ",LIC.showRef);b2.className="big"}msg("ምን እንጫወት?");return}
 em(T,"🏠",function(){mode="h";adm=false;ui()});
 if(mode==="p"||mode==="q"){coll();return}
 if(mode==="c"||mode==="m"){var P=mode==="m"?mpics:pics,key=mode==="m"?mpic:pic;Object.keys(P).forEach(function(k){em(S,P[k].n,function(){if(mode==="m")mpic=k;else pic=k;hist=[];done=false;ui()},k===key)});
@@ -173,12 +174,13 @@ var code=ls("dev");
 if(!code){var u=(window.crypto&&crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+String(Date.now())).replace(/-/g,"").toUpperCase().slice(0,12);code=u.slice(0,4)+"-"+u.slice(4,8)+"-"+u.slice(8,12);ls("dev",code)}
 async function rpc(fn,a){var r=await fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(a)});var j=null;try{j=await r.json()}catch(e){}if(!r.ok)throw j||{message:"error"};return j}
 window.LIC={code:code,rpc:rpc,SB:SB};
+LIC.showRef=async function(){show('<div>…</div>');try{var c=await rpc("get_ref_code",{p_code:code});if(!c)throw 0;show('<div style="font-size:3rem">🎁</div><div>ለሌሎች ወላጆች ይህን ኮድ ይስጡ። ሲመዘገቡና ሲጸድቁ የእርስዎ ፈቃድ በ60 ቀን ይረዝማል።</div><div style="font-size:2rem"><code>'+c+'</code></div><button id="lx" class="big">✖ ዝጋ</button>')}catch(e){show('<div>ኮዱን ማግኘት አልተቻለም</div><button id="lx" class="big">✖ ዝጋ</button>')}g("lx").onclick=hide};
 function show(html){L.style.display="flex";L.innerHTML=html}
 function g(i){return document.getElementById(i)}
 function hide(){L.style.display="none"}
 function info(ic,t,retry){show('<div style="font-size:3rem">'+ic+'</div><div>'+t+'</div><div>የመሣሪያ ኮድ፦ <code>'+code+'</code></div>'+(retry?'<button id="lr" class="big">🔄 ድጋሚ ፈትሽ</button>':''));if(retry)g("lr").onclick=run}
-function reg(){show('<div style="font-size:3rem">🔒</div><div>ይህን መሣሪያ ለመመዝገብ የወላጅ ኢሜል ያስገቡ</div><input id="le" type="email" placeholder="email@example.com"><button id="lg" class="big">ጥያቄ ላክ</button><div id="lm"></div><div>የመሣሪያ ኮድ፦ <code>'+code+'</code></div>');
-g("lg").onclick=async function(){var e=g("le").value.trim();g("lm").textContent="…";try{await rpc("register_device",{p_code:code,p_email:e});run()}catch(x){g("lm").textContent="ኢሜሉ ትክክል አይደለም ወይም መላክ አልተቻለም"}}}
+function reg(){show('<div style="font-size:3rem">🔒</div><div>ይህን መሣሪያ ለመመዝገብ የወላጅ ኢሜል ያስገቡ</div><input id="le" type="email" placeholder="email@example.com"><input id="lf" placeholder="🎁 የጋባዥ ኮድ (ካለ)"><button id="lg" class="big">ጥያቄ ላክ</button><div id="lm"></div><div>የመሣሪያ ኮድ፦ <code>'+code+'</code></div>');
+g("lg").onclick=async function(){var e=g("le").value.trim();g("lm").textContent="…";try{await rpc("register_device",{p_code:code,p_email:e,p_ref:(g("lf").value.trim()||null)});run()}catch(x){g("lm").textContent="ኢሜሉ ትክክል አይደለም ወይም መላክ አልተቻለም"}}}
 function renew(){show('<div style="font-size:3rem">⏰</div><div>ፈቃዱ አብቅቷል። ከአስተዳዳሪው የተቀበሉትን የማረጋገጫ ቁልፍ ያስገቡ</div><input id="lk" placeholder="ቁልፍ"><button id="lg" class="big">አድስ</button><div id="lm"></div><div>የመሣሪያ ኮድ፦ <code>'+code+'</code></div>');
 g("lg").onclick=async function(){g("lm").textContent="…";try{await rpc("redeem_key",{p_code:code,p_key:g("lk").value});run()}catch(x){g("lm").textContent="ቁልፉ ትክክል አይደለም ወይም ተጠቅሞበታል"}}}
 function ok(exp){hide();if(window.loadPics)loadPics();var n=Math.ceil((new Date(exp)-Date.now())/864e5);if(n<=14){var b=document.createElement("div");b.id="lb";b.textContent="⏳ ፈቃዱ በ "+n+" ቀን ያበቃል";document.body.appendChild(b);setTimeout(function(){b.remove()},7000)}}
@@ -191,6 +193,24 @@ if(d.active){ls("exp",d.expires_at);return ok(d.expires_at)}
 return renew()}
 catch(e){var x=ls("exp");if(x&&new Date(x)>new Date()){hide();if(window.loadPics)loadPics();return}info("📡","ከበይነመረብ ጋር መገናኘት አልተቻለም።",true)}}
 run();
+})();
+</script>
+<script>
+(function(){
+var ode=[[64,1],[64,1],[65,1],[67,1],[67,1],[65,1],[64,1],[62,1],[60,1],[60,1],[62,1],[64,1],[64,1.5],[62,.5],[62,2],[64,1],[64,1],[65,1],[67,1],[67,1],[65,1],[64,1],[62,1],[60,1],[60,1],[62,1],[64,1],[62,1.5],[60,.5],[60,2]];
+var tw=[[60,1],[60,1],[67,1],[67,1],[69,1],[69,1],[67,2],[65,1],[65,1],[64,1],[64,1],[62,1],[62,1],[60,2],[67,1],[67,1],[65,1],[65,1],[64,1],[64,1],[62,2],[67,1],[67,1],[65,1],[65,1],[64,1],[64,1],[62,2],[60,1],[60,1],[67,1],[67,1],[69,1],[69,1],[67,2],[65,1],[65,1],[64,1],[64,1],[62,1],[62,1],[60,2]];
+var mi=[[74,1],[67,.5],[69,.5],[71,.5],[72,.5],[74,1],[67,1],[67,1],[76,1],[72,.5],[74,.5],[76,.5],[78,.5],[79,1],[67,1],[67,1],[72,1],[74,.5],[72,.5],[71,.5],[69,.5],[71,1],[72,.5],[71,.5],[69,.5],[67,.5],[66,1],[67,.5],[69,.5],[71,1],[69,1]];
+var T=[["🎼 የደስታ መዝሙር (ቤትሆቨን)",ode],["🎼 ትንሽ ኮከብ (ሞዛርት)",tw],["🎼 ሚኑዌት (ፔትዞልድ)",mi]],AC=null,tm=null,i=0;
+var m=document.createElement("button");m.id="mu";m.textContent="🔇";m.setAttribute("aria-label","music");document.body.appendChild(m);
+function toast(t){var b=document.createElement("div");b.id="lb";b.textContent=t;document.body.appendChild(b);setTimeout(function(){b.remove()},2500)}
+function stop(){clearTimeout(tm);if(AC){try{AC.close()}catch(e){}AC=null}}
+function go(k){stop();var AX=window.AudioContext||window.webkitAudioContext;if(!AX)return;AC=new AX();if(AC.state==="suspended")AC.resume();
+var t=AC.currentTime+.2,B=.6;
+T[k][1].forEach(function(x){var o=AC.createOscillator(),g=AC.createGain(),d=x[1]*B;o.type="sine";o.frequency.value=440*Math.pow(2,(x[0]-69)/12);
+g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.08,t+.04);g.gain.exponentialRampToValueAtTime(.0005,t+d*.95);
+o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d);t+=d});
+tm=setTimeout(function(){go(k)},(t-AC.currentTime+1.5)*1000)}
+m.onclick=function(){i=(i+1)%(T.length+1);if(i===0){stop();m.textContent="🔇";toast("🔇")}else{go(i-1);m.textContent="🎵";toast(T[i-1][0])}};
 })();
 </script>
 </body>
