@@ -5,8 +5,8 @@
 :root{--bg:#f6f3ee;--card:#fff;--ink:#2b2b2b;--line:#ddd;--ac:#ff7a59}
 @media (prefers-color-scheme:dark){:root{--bg:#242029;--card:#332e3a;--ink:#f1ece4;--line:#4d4558;--ac:#ff8f70}}
 *{box-sizing:border-box}body{margin:0;padding:12px;background:var(--bg);color:var(--ink);font-family:"Noto Sans Ethiopic",system-ui,sans-serif}
-.w{max-width:640px;margin:auto}h1{font-size:1.3rem}
-input,button{font:inherit;padding:10px 12px;border-radius:10px;border:2px solid var(--line);background:var(--card);color:var(--ink)}
+.w{max-width:1200px;margin:auto}.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}.pn{max-height:calc(100vh - 130px);overflow-y:auto;padding-right:6px}@media(max-width:800px){.cols{grid-template-columns:1fr}.pn{max-height:none}}h1{font-size:1.3rem}
+input,button,select{font:inherit;padding:10px 12px;border-radius:10px;border:2px solid var(--line);background:var(--card);color:var(--ink)}
 button{cursor:pointer}button.p{background:var(--ac);border-color:var(--ac);color:#fff}
 .c{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
 .r{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
@@ -25,16 +25,16 @@ $("go").onclick=async function(){msg("…");try{var j=await api("/auth/v1/token?
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 var ST={pending:"⏳ በመጠባበቅ ላይ",approved:"✅ ጸድቋል",revoked:"🚫 ታግዷል"};
 async function load(){try{var d=await api("/rest/v1/devices?select=*&order=registered_at.desc");render(d)}catch(e){tok=null;msg("እንደገና ይግቡ");login()}}
-function render(a){var v=$("v");v.innerHTML='<div class="r"><button id="rf">🔄 አድስ</button><small>'+a.length+' መሣሪያዎች</small></div>';
-$("rf").onclick=load;var ps=document.createElement("div");ps.className="c";v.appendChild(ps);pics(ps);
-a.forEach(function(d){var n=d.expires_at?Math.ceil((new Date(d.expires_at)-Date.now())/864e5):null;
-var c=document.createElement("div");c.className="c";
-c.innerHTML='<div><b>'+esc(d.parent_email)+'</b></div><div><code>'+esc(d.device_code)+'</code> <span class="b">'+ST[d.status]+'</span></div><small>ተመዝግቧል፦ '+new Date(d.registered_at).toLocaleDateString()+(d.expires_at?' · ያበቃል፦ '+new Date(d.expires_at).toLocaleDateString()+' ('+(n>0?n+' ቀን ቀሪ':'አብቅቷል')+')':'')+'</small><div class="r"><input type="number" value="90" min="1" style="width:80px"> ቀን<button class="p" data-a="ap">✅ አጽድቅ</button><button data-a="ky">🔑 ቁልፍ</button><button data-a="rv">🚫 ከልክል</button></div><div class="kb"></div>';
-var days=c.querySelector("input");
+function render(a){var v=$("v");v.innerHTML='<div class="r"><button id="rf">🔄 አድስ</button><input id="sq" placeholder="🔍 ኢሜል፣ ኮድ ወይም ማስታወሻ"><select id="sf"><option value="all">ሁሉም</option><option value="soon">⚠️ በ10 ቀን የሚያበቁ</option><option value="pend">⏳ በመጠባበቅ ላይ</option><option value="exp">❌ ያበቁ</option></select><small>'+a.length+' መሣሪያዎች</small></div><div class="cols"><div class="pn" id="dp"></div><div class="pn" id="pp"></div></div>';
+$("rf").onclick=load;var ps=document.createElement("div");ps.className="c";$("pp").appendChild(ps);pics(ps);
+function drawDev(q){$("dp").innerHTML="";a.filter(function(d){var n=d.expires_at?Math.ceil((new Date(d.expires_at)-Date.now())/864e5):null,f=$("sf").value;return (!q||(d.parent_email+d.device_code+(d.note||"")).toLowerCase().indexOf(q)>=0)&&(f==="all"||(f==="soon"&&d.status==="approved"&&n>0&&n<=10)||(f==="pend"&&d.status==="pending")||(f==="exp"&&d.status==="approved"&&n!==null&&n<=0))}).forEach(function(d){var n=d.expires_at?Math.ceil((new Date(d.expires_at)-Date.now())/864e5):null;
+var soon=d.status==="approved"&&n>0&&n<=10;var c=document.createElement("div");c.className="c";
+c.innerHTML='<div><b>'+esc(d.parent_email)+'</b></div><div><code>'+esc(d.device_code)+'</code> <span class="b">'+ST[d.status]+(soon?" ⚠️":"")+'</span></div><small>ተመዝግቧል፦ '+eth(d.registered_at)+(d.expires_at?' · ያበቃል፦ '+eth(d.expires_at)+' ('+(n>0?n+' ቀን ቀሪ':'አብቅቷል')+')':'')+'</small><div><small>🎁 '+esc(d.ref_code||"")+'</small></div><div class="r"><input class="nt" placeholder="📝 ማስታወሻ" style="flex:1;min-width:140px"></div><div class="r"><input type="number" value="90" min="1" style="width:80px"> ቀን<button class="p" data-a="ap">✅ አጽድቅ</button><button data-a="ky">🔑 ቁልፍ</button><button data-a="rv">🚫 ከልክል</button></div><div class="kb"></div>';
+var days=c.querySelector("input[type=number]");var nt=c.querySelector(".nt");nt.value=d.note||"";nt.onchange=async function(){try{await api("/rest/v1/devices?id=eq."+d.id,{method:"PATCH",body:JSON.stringify({note:nt.value})});msg("ተቀምጧል ✅")}catch(e){msg("ማስታወሻ አልተቀመጠም (updates_v2.sql ሮጧል?)")}};
 c.querySelector('[data-a=ap]').onclick=async function(){try{await api("/rest/v1/rpc/admin_approve",{method:"POST",body:JSON.stringify({p_device:d.id,p_days:+days.value||90})});load()}catch(e){msg("አልተሳካም")}};
 c.querySelector('[data-a=ky]').onclick=async function(){try{var k=await api("/rest/v1/rpc/admin_make_key",{method:"POST",body:JSON.stringify({p_device:d.id,p_days:+days.value||90})});c.querySelector(".kb").innerHTML='<div class="k">'+esc(k)+'</div><small>ይህን ቁልፍ አሁን ይቅዱ፤ ከዚህ በኋላ አይታይም። አንድ ጊዜ ብቻ ይሠራል።</small>'}catch(e){msg("ቁልፍ መፍጠር አልተቻለም")}};
 c.querySelector('[data-a=rv]').onclick=async function(){if(!confirm("ይህን መሣሪያ ይከለከል?"))return;try{await api("/rest/v1/devices?id=eq."+d.id,{method:"PATCH",body:JSON.stringify({status:"revoked"})});load()}catch(e){msg("አልተሳካም")}};
-v.appendChild(c)})}
+$("dp").appendChild(c)})}drawDev("");$("sq").oninput=function(){drawDev(this.value.trim().toLowerCase())};$("sf").onchange=function(){drawDev($("sq").value.trim().toLowerCase())}}
 async function pics(ps){ps.innerHTML='<b>🖼️ የስዕል ስብስብ</b><div class="r"><input type="file" id="pf" accept="image/*" multiple><button class="p" id="pu">⬆️ ጫን</button></div><small>ጥቁር መስመር ያላቸው፣ ነጭ ባዶ ክፍል ያላቸው ስዕሎች ይሻላሉ</small><div class="g" id="pg"></div>';
 var base=SB+"/storage/v1/object/pictures/";
 async function list(){try{var a=await api("/rest/v1/pictures?select=*&order=created_at.desc");var g=$("pg");g.innerHTML="";a.forEach(function(p){var w=document.createElement("div");w.innerHTML='<img src="'+SB+'/storage/v1/object/public/pictures/'+encodeURIComponent(p.path)+'"><button>🗑️</button>';
@@ -45,5 +45,9 @@ var r=await fetch(base+nm,{method:"POST",headers:{apikey:KEY,Authorization:"Bear
 await api("/rest/v1/pictures",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({path:nm})})}
 msg("ተጨምሯል ✅");$("pf").value="";list()}catch(e){msg("መጫን አልተቻለም: "+((e&&(e.message||e.error))||"?"))}};
 list()}
+var EM=["መስከረም","ጥቅምት","ኅዳር","ታኅሣሥ","ጥር","የካቲት","መጋቢት","ሚያዝያ","ግንቦት","ሰኔ","ሐምሌ","ነሐሴ","ጳጉሜን"];
+function g2j(y,m,d){var a=Math.floor((14-m)/12),yy=y+4800-a,mm=m+12*a-3;return d+Math.floor((153*mm+2)/5)+365*yy+Math.floor(yy/4)-Math.floor(yy/100)+Math.floor(yy/400)-32045}
+function j2e(j){var r=(j-1723856)%1461,n=(r%365)+365*Math.floor(r/1460);return[4*Math.floor((j-1723856)/1461)+Math.floor(r/365)-Math.floor(r/1460),Math.floor(n/30)+1,(n%30)+1]}
+function eth(s){var d=new Date(s),e=j2e(g2j(d.getFullYear(),d.getMonth()+1,d.getDate()));return e[2]+" "+EM[e[1]-1]+" "+e[0]}
 login();
 </script></body></html>
