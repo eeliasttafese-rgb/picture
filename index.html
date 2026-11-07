@@ -134,9 +134,10 @@ b.onclick=function(){curPic=q;mode="q";hist=[];ui()};w.appendChild(b);
 if(adm){var d=document.createElement("button");d.textContent="🗑️";d.className="em";d.onclick=function(){delPic(q)};w.appendChild(d)}g.appendChild(w)});
 st.appendChild(g);msg(!DB?"ስብስቡ አልተገኘም":PICS.length?"የምትፈልገውን ስዕል ምረጥ!":AS?"ገና ስዕል የለም፤ 🔒 ን ተጭነው ስዕል ይጨምሩ":"ገና ስዕል የለም")}
 else{em(T,"🖼️",function(){mode="p";ui()});cv=document.createElement("canvas");cv.width=800;cv.height=600;var q=cv.getContext("2d");q.fillStyle="#fff";q.fillRect(0,0,800,600);st.appendChild(cv);
-var im=new Image();im.onload=function(){var s=Math.min(800/im.width,600/im.height);q.drawImage(im,(800-im.width*s)/2,(600-im.height*s)/2,im.width*s,im.height*s)};im.src=curPic.url||"/_blob/"+curPic.aid;
+var im=new Image();im.onload=function(){var s=Math.min(800/im.width,600/im.height);q.drawImage(im,(800-im.width*s)/2,(600-im.height*s)/2,im.width*s,im.height*s)};im.crossOrigin="anonymous";im.src=curPic.url||"/_blob/"+curPic.aid;
 cv.onclick=function(e){var r=cv.getBoundingClientRect();try{ff(Math.floor((e.clientX-r.left)*800/r.width),Math.floor((e.clientY-r.top)*600/r.height),cur)}catch(x){msg("ይህ ስዕል መቀባት አልተቻለም")}};
 em(O,"↩️",function(){var z=hist.pop();if(z)cv.getContext("2d").putImageData(z,0,0)});em(O,"💾",function(){cv.toBlob(function(b){dl(b,"my-picture.png")})});msg("ቀለም ምረጥና ንካ!")}}
+async function loadPics(){if(!window.LIC)return;try{var rows=await LIC.rpc("list_pictures",{p_code:LIC.code});PICS=(rows||[]).map(function(r){return{id:r.id,aid:r.id,url:LIC.SB+"/storage/v1/object/public/pictures/"+encodeURIComponent(r.path)}});DB=true;if(mode==="p")ui()}catch(e){}}
 async function init(){try{if(!window.claude)return;DB=await claude.use("db");AS=await claude.use("assets");
 if(DB)DB.collection("pictures").orderBy("ts").onSnapshot(function(s){PICS=s.docs.map(function(d){return{id:d.id,aid:(d.data()||{}).aid,url:(d.data()||{}).url}}).filter(function(q){return q.aid});if(mode==="p")ui()},function(e){msg("ስብስቡን ማንበብ አልተቻለም ("+((e&&e.code)||"?")+")")});
 if(mode==="p")ui()}catch(e){}}
@@ -144,7 +145,7 @@ var LI={"ፀሐይ":"☀️","ቤት":"🏠","ዓሣ":"🐟","ዛፍ":"🌳","�
 function em(p,t,f,on){var b=btn(p,t,f,on);b.classList.add("em");return b}
 function ui(){var T=$("tabs"),S=$("sub"),O=$("tools"),st=$("stage");T.innerHTML=S.innerHTML=O.innerHTML=st.innerHTML="";$("hint").textContent="";msg("");
 $("pal").style.display=mode==="h"?"none":"flex";
-if(mode==="h"){[["c","🎨 ቀለም ቀባ"],["d","✏️ ሳል"],["l","👀 ተመልከትና ሳል"],["p","🖼️ የስዕል ስብስብ"],["m","🌟 መልካም ጠባይ"]].filter(function(m){return m[0]!=="p"||window.claude}).forEach(function(m){var b=btn(T,m[1],function(){mode=m[0];hist=[];done=false;step=0;ui()});b.className="big"});msg("ምን እንጫወት?");return}
+if(mode==="h"){[["c","🎨 ቀለም ቀባ"],["d","✏️ ሳል"],["l","👀 ተመልከትና ሳል"],["p","🖼️ የስዕል ስብስብ"],["m","🌟 መልካም ጠባይ"]].forEach(function(m){var b=btn(T,m[1],function(){mode=m[0];hist=[];done=false;step=0;ui()});b.className="big"});msg("ምን እንጫወት?");return}
 em(T,"🏠",function(){mode="h";adm=false;ui()});
 if(mode==="p"||mode==="q"){coll();return}
 if(mode==="c"||mode==="m"){var P=mode==="m"?mpics:pics,key=mode==="m"?mpic:pic;Object.keys(P).forEach(function(k){em(S,P[k].n,function(){if(mode==="m")mpic=k;else pic=k;hist=[];done=false;ui()},k===key)});
@@ -171,6 +172,7 @@ function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorag
 var code=ls("dev");
 if(!code){var u=(window.crypto&&crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+String(Date.now())).replace(/-/g,"").toUpperCase().slice(0,12);code=u.slice(0,4)+"-"+u.slice(4,8)+"-"+u.slice(8,12);ls("dev",code)}
 async function rpc(fn,a){var r=await fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(a)});var j=null;try{j=await r.json()}catch(e){}if(!r.ok)throw j||{message:"error"};return j}
+window.LIC={code:code,rpc:rpc,SB:SB};
 function show(html){L.style.display="flex";L.innerHTML=html}
 function g(i){return document.getElementById(i)}
 function hide(){L.style.display="none"}
@@ -179,7 +181,7 @@ function reg(){show('<div style="font-size:3rem">🔒</div><div>ይህን መሣ
 g("lg").onclick=async function(){var e=g("le").value.trim();g("lm").textContent="…";try{await rpc("register_device",{p_code:code,p_email:e});run()}catch(x){g("lm").textContent="ኢሜሉ ትክክል አይደለም ወይም መላክ አልተቻለም"}}}
 function renew(){show('<div style="font-size:3rem">⏰</div><div>ፈቃዱ አብቅቷል። ከአስተዳዳሪው የተቀበሉትን የማረጋገጫ ቁልፍ ያስገቡ</div><input id="lk" placeholder="ቁልፍ"><button id="lg" class="big">አድስ</button><div id="lm"></div><div>የመሣሪያ ኮድ፦ <code>'+code+'</code></div>');
 g("lg").onclick=async function(){g("lm").textContent="…";try{await rpc("redeem_key",{p_code:code,p_key:g("lk").value});run()}catch(x){g("lm").textContent="ቁልፉ ትክክል አይደለም ወይም ተጠቅሞበታል"}}}
-function ok(exp){hide();var n=Math.ceil((new Date(exp)-Date.now())/864e5);if(n<=14){var b=document.createElement("div");b.id="lb";b.textContent="⏳ ፈቃዱ በ "+n+" ቀን ያበቃል";document.body.appendChild(b);setTimeout(function(){b.remove()},7000)}}
+function ok(exp){hide();if(window.loadPics)loadPics();var n=Math.ceil((new Date(exp)-Date.now())/864e5);if(n<=14){var b=document.createElement("div");b.id="lb";b.textContent="⏳ ፈቃዱ በ "+n+" ቀን ያበቃል";document.body.appendChild(b);setTimeout(function(){b.remove()},7000)}}
 async function run(){show('<div style="font-size:3rem">🔒</div><div>እየፈተሸ ነው…</div>');
 try{var rows=await rpc("check_device",{p_code:code}),d=rows&&rows[0];
 if(!d)return reg();
@@ -187,7 +189,7 @@ if(d.status==="revoked")return info("🚫","ይህ መሣሪያ ታግዷል። 
 if(d.status==="pending")return info("⏳","ጥያቄዎ ተልኳል። አስተዳዳሪው ሲያጸድቅ ይሠራል።",true);
 if(d.active){ls("exp",d.expires_at);return ok(d.expires_at)}
 return renew()}
-catch(e){var x=ls("exp");if(x&&new Date(x)>new Date()){hide();return}info("📡","ከበይነመረብ ጋር መገናኘት አልተቻለም።",true)}}
+catch(e){var x=ls("exp");if(x&&new Date(x)>new Date()){hide();if(window.loadPics)loadPics();return}info("📡","ከበይነመረብ ጋር መገናኘት አልተቻለም።",true)}}
 run();
 })();
 </script>
