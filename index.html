@@ -127,7 +127,7 @@ while(st.length){var yy=st.pop(),xx=st.pop();if(xx<0||yy<0||xx>=W||yy>=H)continu
 if(Math.abs(d[j]-r0)+Math.abs(d[j+1]-g0)+Math.abs(d[j+2]-b0)>150)continue;seen[p]=1;d[j]=c[0];d[j+1]=c[1];d[j+2]=c[2];d[j+3]=255;st.push(xx+1,yy,xx-1,yy,xx,yy+1,xx,yy-1)}
 q.putImageData(id,0,0)}
 function coll(){var T=$("tabs"),st=$("stage"),O=$("tools");
-if(mode==="p"){em(T,adm?"➕":"🔒",function(){if(!AS||!DB){msg("እዚህ መጨመር አይቻልም። ገጹን በ claude.ai ላይ በራስዎ አካውንት ከአርቲፋክት ገጹ ይክፈቱ። ("+(AS?"":"assets ")+(DB?"":"db")+")");return}if(adm)fi.click();else gate(function(){adm=true;ui()})});
+if(mode==="p"){em(T,adm?"➕":"🔒",function(){if(!AS||!DB){msg("እዚህ መጨመር አይቻልም። ("+(AS?"":"assets ")+(DB?"":"db")+")");return}if(adm)fi.click();else gate(function(){adm=true;ui()})});
 var g=document.createElement("div");g.className="grid";
 PICS.forEach(function(q){var w=document.createElement("div");w.className="cell";var b=document.createElement("button");b.className="th";var im=new Image();im.alt="";im.src=q.url||"/_blob/"+q.aid;im.onerror=function(){msg("ምስሉ አልታየም")};b.appendChild(im);
 b.onclick=function(){curPic=q;mode="q";hist=[];ui()};w.appendChild(b);
