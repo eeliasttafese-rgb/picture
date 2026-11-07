@@ -12,7 +12,7 @@ button{cursor:pointer}button.p{background:var(--ac);border-color:var(--ac);color
 .r{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
 .b{padding:2px 8px;border-radius:8px;font-size:.85rem;background:var(--line)}
 .k{font-size:1.6rem;letter-spacing:2px;font-weight:bold;text-align:center;padding:10px;border:2px dashed var(--ac);border-radius:10px;user-select:all}
-small{opacity:.75}#m{min-height:1.4em;color:var(--ac)}
+small{opacity:.75}.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:8px}.g img{width:100%;height:80px;object-fit:contain;background:#fff;border-radius:8px;border:1px solid var(--line)}.g button{width:100%;padding:4px}#m{min-height:1.4em;color:var(--ac)}
 </style></head><body><div class="w">
 <h1>🔑 የአስተዳዳሪ ገጽ</h1><div id="m"></div><div id="v"></div></div>
 <script>
@@ -26,7 +26,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;
 var ST={pending:"⏳ በመጠባበቅ ላይ",approved:"✅ ጸድቋል",revoked:"🚫 ታግዷል"};
 async function load(){try{var d=await api("/rest/v1/devices?select=*&order=registered_at.desc");render(d)}catch(e){tok=null;msg("እንደገና ይግቡ");login()}}
 function render(a){var v=$("v");v.innerHTML='<div class="r"><button id="rf">🔄 አድስ</button><small>'+a.length+' መሣሪያዎች</small></div>';
-$("rf").onclick=load;
+$("rf").onclick=load;var ps=document.createElement("div");ps.className="c";v.appendChild(ps);pics(ps);
 a.forEach(function(d){var n=d.expires_at?Math.ceil((new Date(d.expires_at)-Date.now())/864e5):null;
 var c=document.createElement("div");c.className="c";
 c.innerHTML='<div><b>'+esc(d.parent_email)+'</b></div><div><code>'+esc(d.device_code)+'</code> <span class="b">'+ST[d.status]+'</span></div><small>ተመዝግቧል፦ '+new Date(d.registered_at).toLocaleDateString()+(d.expires_at?' · ያበቃል፦ '+new Date(d.expires_at).toLocaleDateString()+' ('+(n>0?n+' ቀን ቀሪ':'አብቅቷል')+')':'')+'</small><div class="r"><input type="number" value="90" min="1" style="width:80px"> ቀን<button class="p" data-a="ap">✅ አጽድቅ</button><button data-a="ky">🔑 ቁልፍ</button><button data-a="rv">🚫 ከልክል</button></div><div class="kb"></div>';
@@ -35,5 +35,15 @@ c.querySelector('[data-a=ap]').onclick=async function(){try{await api("/rest/v1/
 c.querySelector('[data-a=ky]').onclick=async function(){try{var k=await api("/rest/v1/rpc/admin_make_key",{method:"POST",body:JSON.stringify({p_device:d.id,p_days:+days.value||90})});c.querySelector(".kb").innerHTML='<div class="k">'+esc(k)+'</div><small>ይህን ቁልፍ አሁን ይቅዱ፤ ከዚህ በኋላ አይታይም። አንድ ጊዜ ብቻ ይሠራል።</small>'}catch(e){msg("ቁልፍ መፍጠር አልተቻለም")}};
 c.querySelector('[data-a=rv]').onclick=async function(){if(!confirm("ይህን መሣሪያ ይከለከል?"))return;try{await api("/rest/v1/devices?id=eq."+d.id,{method:"PATCH",body:JSON.stringify({status:"revoked"})});load()}catch(e){msg("አልተሳካም")}};
 v.appendChild(c)})}
+async function pics(ps){ps.innerHTML='<b>🖼️ የስዕል ስብስብ</b><div class="r"><input type="file" id="pf" accept="image/*" multiple><button class="p" id="pu">⬆️ ጫን</button></div><small>ጥቁር መስመር ያላቸው፣ ነጭ ባዶ ክፍል ያላቸው ስዕሎች ይሻላሉ</small><div class="g" id="pg"></div>';
+var base=SB+"/storage/v1/object/pictures/";
+async function list(){try{var a=await api("/rest/v1/pictures?select=*&order=created_at.desc");var g=$("pg");g.innerHTML="";a.forEach(function(p){var w=document.createElement("div");w.innerHTML='<img src="'+SB+'/storage/v1/object/public/pictures/'+encodeURIComponent(p.path)+'"><button>🗑️</button>';
+w.querySelector("button").onclick=async function(){if(!confirm("ይሰረዝ?"))return;try{await fetch(base+encodeURIComponent(p.path),{method:"DELETE",headers:{apikey:KEY,Authorization:"Bearer "+tok}});await api("/rest/v1/pictures?id=eq."+p.id,{method:"DELETE"});list()}catch(e){msg("አልተሰረዘም")}};g.appendChild(w)})}catch(e){msg("ስዕሎችን ማንበብ አልተቻለም፤ pictures_schema.sql ሮጧል?")}}
+$("pu").onclick=async function(){var fs=[].slice.call($("pf").files);if(!fs.length)return;msg("እየጫነ ነው…");
+try{for(var f of fs){var ext=(f.name.match(/\.[a-z0-9]+$/i)||[".png"])[0].toLowerCase();var nm=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2))+ext;
+var r=await fetch(base+nm,{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+tok,"Content-Type":f.type||"application/octet-stream"},body:f});if(!r.ok)throw await r.json();
+await api("/rest/v1/pictures",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({path:nm})})}
+msg("ተጨምሯል ✅");$("pf").value="";list()}catch(e){msg("መጫን አልተቻለም: "+((e&&(e.message||e.error))||"?"))}};
+list()}
 login();
 </script></body></html>
