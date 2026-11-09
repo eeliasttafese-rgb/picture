@@ -179,15 +179,15 @@ function show(html){L.style.display="flex";L.innerHTML=html}
 function g(i){return document.getElementById(i)}
 function hide(){L.style.display="none"}
 function info(ic,t,retry){show('<div style="font-size:3rem">'+ic+'</div><div>'+t+'</div><div>የመሣሪያ ኮድ፦ <code>'+code+'</code></div>'+(retry?'<button id="lr" class="big">🔄 ድጋሚ ፈትሽ</button>':''));if(retry)g("lr").onclick=run}
-function reg(){show('<div style="font-size:3rem">🔒</div><div>ይህን መሣሪያ ለመመዝገብ የወላጅ ኢሜል ያስገቡ</div><input id="le" type="email" placeholder="email@example.com"><input id="lf" placeholder="🎁 የጋባዥ ኮድ (ካለ)"><button id="lg" class="big">ጥያቄ ላክ</button><div id="lm"></div><div>የመሣሪያ ኮድ፦ <code>'+code+'</code></div>');
+function reg(){show('<div style="font-size:3rem">🔒</div><div>በዚህ መተግበሪያ ለመመዝገብ የወላጅ ኢሜልን ያስገቡ</div><input id="le" type="email" placeholder="ትክክለኛውን ያስገቡ የመተግበሪያ ኮድ እንዲላክሎ"><input id="lf" placeholder="🎁 የጋባዥ ኮድ (ካለ)"><button id="lg" class="big">ጥያቄሄን ላክ</button><div id="lm"></div><div>የመተግበሪያው ኮድ፦ <code>'+code+'</code></div>');
 g("lg").onclick=async function(){var e=g("le").value.trim();g("lm").textContent="…";try{await rpc("register_device",{p_code:code,p_email:e,p_ref:(g("lf").value.trim()||null)});run()}catch(x){g("lm").textContent="ኢሜሉ ትክክል አይደለም ወይም መላክ አልተቻለም"}}}
-function renew(){show('<div style="font-size:3rem">⏰</div><div>ፈቃዱ አብቅቷል። ከአስተዳዳሪው የተቀበሉትን የማረጋገጫ ቁልፍ ያስገቡ</div><input id="lk" placeholder="ቁልፍ"><button id="lg" class="big">አድስ</button><div id="lm"></div><div>የመሣሪያ ኮድ፦ <code>'+code+'</code></div>');
+function renew(){show('<div style="font-size:3rem">⏰</div><div>የተፈቀደሎት ቀን አብቅቷል። ከአስተዳዳሪው የተቀበሉትን የማረጋገጫ ቁልፍ ያስገቡ ወይም በስልክ ቁ. 09287708 ይደውሉ</div><input id="lk" placeholder="ቁልፍ"><button id="lg" class="big">አድስ</button><div id="lm"></div><div>የመተግበሪያ ኮድ፦ <code>'+code+'</code></div>');
 g("lg").onclick=async function(){g("lm").textContent="…";try{await rpc("redeem_key",{p_code:code,p_key:g("lk").value});run()}catch(x){g("lm").textContent="ቁልፉ ትክክል አይደለም ወይም ተጠቅሞበታል"}}}
 function ok(exp){hide();if(window.loadPics)loadPics();var n=Math.ceil((new Date(exp)-Date.now())/864e5);if(n<=14){var b=document.createElement("div");b.id="lb";b.textContent="⏳ ፈቃዱ በ "+n+" ቀን ያበቃል";document.body.appendChild(b);setTimeout(function(){b.remove()},7000)}}
 async function run(){show('<div style="font-size:3rem">🔒</div><div>እየፈተሸ ነው…</div>');
 try{var rows=await rpc("check_device",{p_code:code}),d=rows&&rows[0];
 if(!d)return reg();
-if(d.status==="revoked")return info("🚫","ይህ መሣሪያ ታግዷል። አስተዳዳሪውን ያነጋግሩ።");
+if(d.status==="revoked")return info("🚫","ይህ መሣሪያ ታግዷል። አስተዳዳሪውን ያነጋግሩ በ 0929 28 77 08 ይደውሉ።");
 if(d.status==="pending")return info("⏳","ጥያቄዎ ተልኳል። አስተዳዳሪው ሲያጸድቅ ይሠራል።",true);
 if(d.active){ls("exp",d.expires_at);return ok(d.expires_at)}
 return renew()}
